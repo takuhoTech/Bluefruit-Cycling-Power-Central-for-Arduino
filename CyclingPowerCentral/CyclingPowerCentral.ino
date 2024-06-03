@@ -158,13 +158,49 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
   DEBUG_print("Disconnected, reason = 0x"); DEBUG_printlnHEX(reason);
 }
 
+uint16_t frag = 0;
+int16_t power = 0;
+uint16_t revolution = 0;
+uint16_t revolution_last = 0;
+uint16_t timestamp = 0;
+uint16_t timestamp_last = 0;
+
+uint16_t cadence = 0;
+
 void notify_callback(BLEClientCharacteristic * chr, uint8_t* data, uint16_t len)
 {
-  DEBUG_print("Measurement : ");
-  for (int i = 0; i < len; i++)
-  {
+  /*
+    DEBUG_print("Measurement : ");
+    for (int i = 0; i < len; i++)
+    {
     DEBUG_print(data[i]);
     DEBUG_print(" ");
+    }
+    DEBUG_println();
+  */
+
+  timestamp = word(data[7], data[6]); //単位は1/2048[s]じゃないっぽい
+  revolution = word(data[5], data[4]);
+  power = word(data[3], data[2]);
+  frag = word(data[1], data[0]);
+
+  if (revolution > revolution_last)
+  {
+    //cadence = 60.0 / ( ((timestamp - timestamp_last) / 1024.0) / (revolution - revolution_last) );
+    cadence = 60 * 1024 * (revolution - revolution_last) / (timestamp - timestamp_last);
   }
-  DEBUG_println();
+
+  //DEBUG_print("timestamp : ");
+  //DEBUG_println(timestamp);
+  //DEBUG_print("revolutions : ");
+  //DEBUG_println(revolution);
+  DEBUG_print("power : ");
+  DEBUG_println(power);
+  //DEBUG_print("frags : ");
+  //DEBUG_println(frag);
+  DEBUG_print("cadence : ");
+  DEBUG_println(cadence);
+
+  timestamp_last = timestamp;
+  revolution_last = revolution;
 }
